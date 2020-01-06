@@ -1,0 +1,47 @@
+import  xlrd
+import xlwt
+import os
+
+
+in_filename =  'rishiji.xlsx'
+out_filename = 'temp.xlsx'
+
+
+
+if os.path.isfile(out_filename):
+    os.remove(out_filename)            #delete file if it exists                                                               
+
+
+
+xl_object = xlrd.open_workbook(in_filename)
+sheet = xl_object.sheet_by_index(0)        # Assuming first sheet
+
+
+workbook = xlwt.Workbook()                                                                                                             
+sheet_out = workbook.add_sheet('DIFF')  
+
+
+sheet_out.write(0, 0, sheet.cell_value(0, 0))
+sheet_out.write(0, 1, sheet.cell_value(0, 1))
+sheet_out.write(0, 2, 'difference')
+
+
+from itertools import zip_longest
+
+for index in range(1, sheet.nrows):                  # Not considering the top descriptor fields
+    first_cell, second_cell = sheet.cell_value(index, 0),  sheet.cell_value(index, 1)
+
+    sheet_out.write(index, 0, first_cell)                                                                                               
+    sheet_out.write(index, 1, second_cell) 
+
+    difference_string = '' 
+
+    cell_one_words = first_cell.strip().split()
+    cell_two_words = second_cell.strip().split()
+    for inner_index, [word_one, word_two] in enumerate(zip_longest(cell_one_words, cell_two_words)):
+        if word_one != word_two or word_one is None:
+            difference_string += f'{word_two}({inner_index})'
+    if difference_string == '':
+        difference_string = 'no_difference'
+    sheet_out.write(index, 2, difference_string)
+workbook.save(out_filename)
